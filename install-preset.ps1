@@ -6,7 +6,7 @@ if (!$Directory_Exists) {
     Write-Host -ForegroundColor Yellow "[MISSING]"
     Write-Host "Création du dossier de préset du launcher Arma 3 : " -NoNewline
     New-Item $Preset_Directory -ItemType Directory | Out-Null
-    Write-Host -ForegroundColor Green "[OK]"    
+    Write-Host -ForegroundColor Green "[OK]"
 }
 else {
     Write-Host -ForegroundColor Green "[PRESENT]"
@@ -41,3 +41,5 @@ Add-Content -Path $Preset_File '</published-ids>'
 Add-Content -Path $Preset_File '<dlcs-appids />'
 Add-Content -Path $Preset_File '</addons-presets>'
 Write-Host -ForegroundColor Green "[OK] "
+
+Pause

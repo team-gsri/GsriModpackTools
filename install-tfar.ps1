@@ -68,3 +68,5 @@ if (!$TFAR_Beta -and !$TFAR_Zip) {
 } else {
     Write-Host -ForegroundColor Green "[OK]"
 }
+
+Pause
