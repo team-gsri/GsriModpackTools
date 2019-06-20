@@ -39,7 +39,7 @@ if ($TFAR_Zero -and $TS_Running) {
 }
 elseif ($TFAR_Zero) {
     Write-Host -ForegroundColor Yellow "[FAIL]"
-    Write-Host -ForegroundColor Blue " > TFAR 0.x installé, suppression en cours"
+    Write-Host -ForegroundColor Cyan " > TFAR 0.x installé, suppression en cours"
     Remove-Item $TFAR_Zero_64 -ErrorAction Ignore
     Remove-Item $TFAR_Zero_86 -ErrorAction Ignore
 }

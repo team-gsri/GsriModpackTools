@@ -59,8 +59,8 @@ try {
     else {
         Write-Host -ForegroundColor Green "[OK]"
     }
-    Write-Host -ForegroundColor Blue " > Version locale : $Ver_Local_Value"
-    Write-Host -ForegroundColor Blue " > Version serveur : $Ver_Remote_Value"
+    Write-Host -ForegroundColor Cyan " > Version locale : $Ver_Local_Value"
+    Write-Host -ForegroundColor Cyan " > Version serveur : $Ver_Remote_Value"
     
     # Vérification absence de reliquats TFAR Zero
     $TS_Path = "$env:APPDATA\TS3Client\plugins"
@@ -70,7 +70,7 @@ try {
     if ($TFAR_Zero) {
         $global:fail = $true
         Write-Host -ForegroundColor Red "[FAIL]" 
-        Write-Host -ForegroundColor Blue " > $TFAR_Zero_File présent"
+        Write-Host -ForegroundColor Cyan " > $TFAR_Zero_File présent"
     }
     else {
         Write-Host -ForegroundColor Green "[OK]" 
@@ -83,7 +83,7 @@ try {
     if (!$TFAR_Beta) {
         $global:fail = $true
         Write-Host -ForegroundColor Red "[FAIL]"
-        Write-Host -ForegroundColor Blue " > $TFAR_Beta_File absent"
+        Write-Host -ForegroundColor Cyan " > $TFAR_Beta_File absent"
     }
     else {
         Write-Host -ForegroundColor Green "[OK]" 
