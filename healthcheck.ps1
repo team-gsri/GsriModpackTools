@@ -72,13 +72,12 @@ try {
     
     # Vérification absence de reliquats TFAR 0.x
     Write-Host 'Vérification de l''absence du plugin TS3 TFAR 0.x : ' -NoNewline
-    $TFAR_0_86 = Test-Path -PathType Leaf "$TS_Plugins_Path\task_force_radio_win32.dll"
-    $TFAR_0_64 = Test-Path -PathType Leaf "$TS_Plugins_Path\task_force_radio_win64.dll"
-    if ($TFAR_0_86 -or $TFAR_0_64) {
+    $TFAR_Zero_File = if ($Is_Arch_X64) { "$TS_Plugins_Path\task_force_radio_win64.dll" } else { "$TS_Plugins_Path\task_force_radio_win32.dll" }
+    $TFAR_Zero = Test-Path -PathType Leaf $TFAR_Zero_File
+    if ($TFAR_Zero) {
         $global:fail = $true
         Write-Host -ForegroundColor Red "[FAIL]" 
-        if ($TFAR_0_86) { Write-Host -ForegroundColor Blue " > $TS_Plugins_Path\task_force_radio_win32.dll présent" }
-        if ($TFAR_0_64) { Write-Host -ForegroundColor Blue " > $TS_Plugins_Path\task_force_radio_win64.dll présent" }
+        Write-Host -ForegroundColor Blue " > $TFAR_Zero_File présent"
     }
     else {
         Write-Host -ForegroundColor Green "[OK]" 
@@ -86,13 +85,12 @@ try {
 
     # Vérification installation TFAR 1.x
     Write-Host 'Vérification de la présence du plugin TS3 TFAR 1.x : ' -NoNewline
-    $TFAR_1_86 = Test-Path -PathType Leaf "$TS_Plugins_Path\TFAR_win32.dll"
-    $TFAR_1_64 = Test-Path -PathType Leaf "$TS_Plugins_Path\TFAR_win64.dll"
-    if (!($TFAR_1_86 -and $TFAR_1_64)) {
+    $TFAR_Beta_File = if ($Is_Arch_X64) { "$TS_Plugins_Path\TFAR_win64.dll" } else { "$TS_Plugins_Path\TFAR_win32.dll" }
+    $TFAR_Beta = Test-Path -PathType Leaf $TFAR_Beta_File
+    if (!$TFAR_Beta) {
         $global:fail = $true
         Write-Host -ForegroundColor Red "[FAIL]"
-        if(!$TFAR_1_86) { Write-Host -ForegroundColor Blue " > $TS_Plugins_Path\TFAR_win32.dll absent" }
-        if(!$TFAR_1_64) { Write-Host -ForegroundColor Blue " > $TS_Plugins_Path\TFAR_win64.dll absent" }
+        Write-Host -ForegroundColor Blue " > $TFAR_Beta_File absent"
     }
     else {
         Write-Host -ForegroundColor Green "[OK]" 
