@@ -45,7 +45,7 @@ try {
   
     # Vérification si le modpack est Ã  jour
     Write-Host 'Vérification de la version du modpack : ' -NoNewline
-    $Ver_Remote = (Invoke-WebRequest -URI "https://mods.gsri.team/version.txt").Content
+    $Ver_Remote = (Invoke-WebRequest -UseBasicParsing -URI "https://mods.gsri.team/version.txt").Content
     $Ver_Remote_Null = ($null -eq $Ver_Remote)
     $Ver_Remote_Value = if ($Ver_Remote_Null) { "-" } else { $Ver_Remote.Trim() }
     $Ver_Local = (Get-Content .\version.txt -ErrorAction Ignore)
