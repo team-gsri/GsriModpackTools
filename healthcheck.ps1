@@ -1,119 +1,115 @@
 try {
 
-    # Récupération du dossier mods
-    Write-Host -ForegroundColor Green -NoNewline "[OK] "
-    Write-Host "Dossier mods : " $PSScriptRoot
+    $global:fail = $false
 
-    # Vérification de l'installation de Arma 3
-    $A3_Registry_Path = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 107410'
-    $A3_Registry = Get-ItemProperty -Path $A3_Registry_Path -ErrorAction Ignore
-    if ($null -eq $A3_Registry.InstallLocation) { throw "[FAIL] Arma 3 n'est pas installé !" }
-    Write-Host -ForegroundColor Green -NoNewline "[OK] "
-    Write-Host "Arma 3 installé : " $A3_Registry.InstallLocation
+    # Verifying current architecture
+    Write-Host "Vérification de l'architecture du processeur : " -NoNewline
+    $Is_Arch_X64 = ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64')
+    if ($Is_Arch_X64) { Write-Host -ForegroundColor Green '[X64]' } else { Write-Host -ForegroundColor DarkYellow '[X86]' }    
+    $Uninstall_Registry_Path = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
+    $Uninstall_Registry_Path_Wow64 = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
 
-    # Vérification de l'installation de Arma3Sync
-    $Sync_Registry_Path = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{F097E7D7-D093-4394-9EED-43AFCCD12B7A}_is1'
-    $Sync_Registry = Get-ItemProperty -Path $Sync_Registry_Path -ErrorAction Ignore
-    if ($null -eq $Sync_Registry.InstallLocation) { throw "[FAIL] Arma3Sync n'est pas installé !" }
-    Write-Host -ForegroundColor Green -NoNewline "[OK] "
-    Write-Host "Arma3Sync installé : " $Sync_Registry.InstallLocation
 
-    # Vérification de l'installation de Teamspeak
-    $TS_Registry_Path = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\TeamSpeak 3 Client'
-    $TS_Registry = Get-ItemProperty -Path $TS_Registry_Path -ErrorAction Ignore
-    if ($null -eq $TS_Registry.InstallLocation) { throw "[FAIL] Teamspeak n'est pas installé !" }
-    Write-Host -ForegroundColor Green -NoNewline "[OK] "
-    Write-Host "Teamspeak installé : " $TS_Registry.InstallLocation
+    function Test-Installation {
+        param(
+            [string]$DisplayName,
+            [string]$Subnode = "",
+            [bool]$IsWOW64 = $false
+        )
 
-    # Vérification si le modpack est à jour
-    $Ver_Remote = (Invoke-WebRequest -URI "https://mods.gsri.team/version.txt").Content.Trim()
-    if ($null -eq $Ver_Remote) {
-        throw "[FAIL] impossible de contacter le serveur de mods GSRI !"
-    }
-    Write-Host -ForegroundColor Green -NoNewline "[OK] "
-    Write-Host "Modpack GSRI : version" $Ver_Remote
-    $Ver_Local = (Get-Content .\version.txt).Trim()
-    Write-Host -ForegroundColor Green -NoNewline "[OK] "
-    Write-Host "Modpack local : version" $Ver_Local
-    if (Compare-Object $Ver_Remote -DifferenceObject $Ver_Local) {
-        throw "[FAIL] Veuillez mettre à jour le modpack GSRI !"
-    }
+        Write-Host "Vérification de l'installation de $DisplayName : " -NoNewline
 
-    # Récupération du chemin des plugins
-    $TS_Plugins_Path = "$env:APPDATA\TS3Client\plugins"
-    Write-Host -ForegroundColor Green -NoNewline "[OK] "
-    Write-Host "Teamspeak plugins : " $TS_Plugins_Path
+        $Uninstall_Registry_Path = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
+        $Uninstall_Registry_Path_Wow64 = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
+        $Registry_Path = If ($Is_WOW64) { $Uninstall_Registry_Path_Wow64 } else { $Uninstall_Registry_Path }
+        $Registry_Path = "$Registry_Path\$Subnode"
 
-    # Arrête de Teamspeak si nécessaire
-    $TS_was_running = $false
-    $TS_Count = Get-Process -Name "ts3client_win64" -ErrorAction Ignore | Measure-Object
-    if ($TS_Count.Count -gt 0) {
-        $TS_was_running = $true
-        Write-Host -ForegroundColor DarkYellow -NoNewline "[WARN] "
-        Write-Host "Teamspeak en cours d'exécution, arrêt en cours ..."
-        Start-Process -Verb RunAs -FilePath "powershell.exe" -ArgumentList 'Get-Process -Name "ts3client_win64" | ForEach-Object { $_.CloseMainWindow() | Out-Null }'
-        Start-Sleep -Seconds 3
-    }
-
-    # Nettoyage des reliquats de TFAR 0.x
-    "$TS_Plugins_Path\task_force_radio_win32.dll", `
-        "$TS_Plugins_Path\task_force_radio_win64.dll" | ForEach-Object {
-        if (Test-Path -PathType Leaf $_) {
-            Write-Host -ForegroundColor DarkYellow -NoNewline "[WARN] "
-            Write-Host "Plugin TFAR 0.x présent, suppression en cours ..."
-            Remove-Item $_
+        $Registry_Entry = Get-ChildItem -Recurse -Path $Registry_Path |
+        Where-Object {
+            $DisplayName -eq ($_ | Get-ItemProperty -Name DisplayName -ErrorAction Ignore).DisplayName
+        } |
+        Select-Object -First 1
+        
+        $Install_Location = $Registry_Entry | Get-ItemPropertyValue -Name InstallLocation
+        If ($null -eq $Install_Location) {
+            $global:fail = $true
+            Write-Host -ForegroundColor Red "[FAIL]"
+        }
+        else {
+            Write-Host -ForegroundColor Green "[OK]"
+            Write-Host -ForegroundColor Blue " > $Install_Location"
         }
     }
 
-    # Vérification de la présence de l'installeur du plugin TFAR
-    $TFAR_Zip = "$PSScriptRoot\Core\@TFAR\teamspeak\task_force_radio.ts3_plugin"
-    if (-not (Test-Path -PathType Leaf $TFAR_Zip)) {
-        throw "[FAIL] Le mod TFAR est manquant"
-    }
-    Write-Host -ForegroundColor Green -NoNewline "[OK] "
-    Write-Host "Installeur plugin TFAR présent : " $TFAR_Zip
 
-    # Réinstallation du plugin
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    "$TS_Plugins_Path\TFAR_win32.dll",
-    "$TS_Plugins_Path\TFAR_win64.dll" | ForEach-Object { if (Test-Path -PathType Leaf $_) { Remove-Item $_ } }
-    if (Test-Path -PathType Container "$TS_Plugins_Path\radio-sounds") { Remove-Item -Recurse "$TS_Plugins_Path\radio-sounds" }
-    [System.IO.Compression.ZipFile]::ExtractToDirectory($TFAR_Zip, "$TS_Plugins_Path\..")
-    Remove-Item "$TS_Plugins_Path\..\package.ini"
-    Write-Host -ForegroundColor Green -NoNewline "[OK] "
-    Write-Host "Plugin TFAR forcé sur la version GSRI avec succès"
-
-    # Vérification de l'existance d'un préset GSRI
-    $A3_Preset = "$env:LOCALAPPDATA\Arma 3 Launcher\Presets\GSRI.preset2"
-    Write-Host -ForegroundColor Green -NoNewline "[OK] "
-    Write-Host "Arma 3 Launcher GSRI preset : " $A3_Preset
-    if (Test-Path -PathType Leaf $A3_Preset) {
-        Write-Host -ForegroundColor DarkYellow -NoNewline "[WARN] "
-        Write-Host "Le preset GSRI existe déjà, suppression ..."
-        Remove-Item $A3_Preset
-    }
-    Add-Content -Path $A3_Preset '<?xml version="1.0" encoding="utf-8"?>'
-    Add-Content -Path $A3_Preset "<addons-presets>
-<last-update>$(Get-Date -Format "o")</last-update>
-<published-ids>"
-    Get-ChildItem -Path $PSScriptRoot -Recurse -Filter "@*" |
-            Where-Object { !($_.FullName -like "*\Campaign\@*") } |
-            ForEach-Object {
-        Add-Content -Path $A3_Preset "<id>local:$($_.FullName)</id>"
-    }
-    Add-Content -Path $A3_Preset '</published-ids>
-<dlcs-appids />
-</addons-presets>'
-    Write-Host -ForegroundColor Green -NoNewline "[OK] "
-    Write-Host "Preset GSRI créé dans le launcher officiel"
-
+    # Vérification de l'installation de Arma 3
+    Test-Installation -DisplayName 'Arma 3'
     
-    Write-Host ""
-    Write-Host "Votre installation est validée"
+    # Vérification de l'installation de Arma 3 Sync
+    Test-Installation -DisplayName 'Arma3Sync' -IsWOW64 $Is_Arch_X64
+    
+    # Vérification de l'installation de Teamspeak
+    Test-Installation -DisplayName 'TeamSpeak 3 Client'
+  
+    # Vérification si le modpack est à jour
+    Write-Host 'Vérification de la version du modpack : ' -NoNewline
+    $Ver_Remote = (Invoke-WebRequest -URI "https://mods.gsri.team/version.txt").Content
+    $Ver_Remote_Null = ($null -eq $Ver_Remote)
+    $Ver_Remote_Value = if ($Ver_Remote_Null) { "-" } else { $Ver_Remote.Trim() }
+    $Ver_Local = (Get-Content .\version.txt -ErrorAction Ignore)
+    $Ver_Local_Null = ($null -eq $Ver_Local)
+    $Ver_Local_Value = if ($Ver_Local_Null) { "-" } else { $Ver_Local.Trim() }
+    $Ver_Compare = Compare-Object $Ver_Remote_Value -DifferenceObject $Ver_Local_Value
+    if ($Ver_Null_Remote -or $Ver_Null_Local -or $Ver_Compare) {
+        $global:fail = $true
+        Write-Host -ForegroundColor Red "[FAIL]"
+    }
+    else {
+        Write-Host -ForegroundColor Green "[OK]"
+    }
+    Write-Host -ForegroundColor Blue " > Version locale : $Ver_Local_Value"
+    Write-Host -ForegroundColor Blue " > Version serveur : $Ver_Remote_Value"
+    
+    # Vérification absence de reliquats TFAR 0.x
+    Write-Host 'Vérification de l''absence du plugin TS3 TFAR 0.x : ' -NoNewline
+    $TFAR_0_86 = Test-Path -PathType Leaf "$TS_Plugins_Path\task_force_radio_win32.dll"
+    $TFAR_0_64 = Test-Path -PathType Leaf "$TS_Plugins_Path\task_force_radio_win64.dll"
+    if ($TFAR_0_86 -or $TFAR_0_64) {
+        $global:fail = $true
+        Write-Host -ForegroundColor Red "[FAIL]" 
+        if ($TFAR_0_86) { Write-Host -ForegroundColor Blue " > $TS_Plugins_Path\task_force_radio_win32.dll présent" }
+        if ($TFAR_0_64) { Write-Host -ForegroundColor Blue " > $TS_Plugins_Path\task_force_radio_win64.dll présent" }
+    }
+    else {
+        Write-Host -ForegroundColor Green "[OK]" 
+    }
+
+    # Vérification installation TFAR 1.x
+    Write-Host 'Vérification de la présence du plugin TS3 TFAR 1.x : ' -NoNewline
+    $TFAR_1_86 = Test-Path -PathType Leaf "$TS_Plugins_Path\TFAR_win32.dll"
+    $TFAR_1_64 = Test-Path -PathType Leaf "$TS_Plugins_Path\TFAR_win64.dll"
+    if (!($TFAR_1_86 -and $TFAR_1_64)) {
+        $global:fail = $true
+        Write-Host -ForegroundColor Red "[FAIL]"
+        if(!$TFAR_1_86) { Write-Host -ForegroundColor Blue " > $TS_Plugins_Path\TFAR_win32.dll absent" }
+        if(!$TFAR_1_64) { Write-Host -ForegroundColor Blue " > $TS_Plugins_Path\TFAR_win64.dll absent" }
+    }
+    else {
+        Write-Host -ForegroundColor Green "[OK]" 
+    }    
+
+    if ($global:fail) {
+        Write-Host -ForegroundColor Red "`n *** Votre installation n'est pas correcte *** `n"
+    }
+    else {
+        Write-Host -ForegroundColor Green "`n *** Votre installation est validée *** `n"
+    }
     Pause
 }
 catch {
+    $global:fail = $true
     Write-Host ""
-    Write-Host -ForegroundColor Red $_.Exception.Message
+    Write-Host -ForegroundColor DarkYellow 'Une erreur est survenue :'
+    Write-Host -ForegroundColor DarkYellow $_.Exception.Message
     Pause
 }
