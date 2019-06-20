@@ -23,7 +23,7 @@ try {
         $Uninstall_Registry_Path_Wow64 = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
         $Uninstall_Path = If ($IsWOW64) { $Uninstall_Registry_Path_Wow64 } else { $Uninstall_Registry_Path }
         $Registry_Path = "$Uninstall_Path\$Node"
-        $Install_Location = Get-ItemPropertyValue -Path $Registry_Path -Name InstallLocation
+        $Install_Location = Get-ItemPropertyValue -Path $Registry_Path -Name InstallLocation -ErrorAction Ignore
         If ($null -eq $Install_Location) {
             $global:fail = $true
             Write-Host -ForegroundColor Red "[FAIL]"
