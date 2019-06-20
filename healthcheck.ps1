@@ -62,9 +62,10 @@ try {
     Write-Host -ForegroundColor Blue " > Version locale : $Ver_Local_Value"
     Write-Host -ForegroundColor Blue " > Version serveur : $Ver_Remote_Value"
     
-    # Vérification absence de reliquats TFAR 0.x
-    Write-Host 'Vérification de l''absence du plugin TS3 TFAR 0.x : ' -NoNewline
-    $TFAR_Zero_File = if ($Is_Arch_X64) { "$TS_Plugins_Path\task_force_radio_win64.dll" } else { "$TS_Plugins_Path\task_force_radio_win32.dll" }
+    # Vérification absence de reliquats TFAR Zero
+    $TS_Path = "$env:APPDATA\TS3Client\plugins"
+    Write-Host 'Vérification de l''absence du plugin TS3 TFAR Zero : ' -NoNewline
+    $TFAR_Zero_File = if ($Is_Arch_X64) { "$TS_Path\task_force_radio_win64.dll" } else { "$TS_Path\task_force_radio_win32.dll" }
     $TFAR_Zero = Test-Path -PathType Leaf $TFAR_Zero_File
     if ($TFAR_Zero) {
         $global:fail = $true
@@ -75,9 +76,9 @@ try {
         Write-Host -ForegroundColor Green "[OK]" 
     }
 
-    # Vérification installation TFAR 1.x
-    Write-Host 'Vérification de la présence du plugin TS3 TFAR 1.x : ' -NoNewline
-    $TFAR_Beta_File = if ($Is_Arch_X64) { "$TS_Plugins_Path\TFAR_win64.dll" } else { "$TS_Plugins_Path\TFAR_win32.dll" }
+    # Vérification installation TFAR Beta
+    Write-Host 'Vérification de la présence du plugin TS3 TFAR Beta : ' -NoNewline
+    $TFAR_Beta_File = if ($Is_Arch_X64) { "$TS_Path\TFAR_win64.dll" } else { "$TS_Path\TFAR_win32.dll" }
     $TFAR_Beta = Test-Path -PathType Leaf $TFAR_Beta_File
     if (!$TFAR_Beta) {
         $global:fail = $true
