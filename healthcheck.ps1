@@ -94,13 +94,13 @@ try {
     }
     else {
         Write-Host -ForegroundColor Green "`n *** Votre installation est validée *** `n"
-    }
-    Pause
+    }    
 }
 catch {
     $global:fail = $true
     Write-Host ""
     Write-Host -ForegroundColor Yellow 'Une erreur est survenue :'
-    Write-Host -ForegroundColor Yellow $_.Exception.Message
-    Pause
+    Write-Host -ForegroundColor Yellow $_.Exception.Message    
 }
+
+Pause
