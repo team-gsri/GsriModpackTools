@@ -3,7 +3,7 @@ Write-Host "Vérification de l'existance du dossier de préset du launcher Arma 3 
 $Preset_Directory = "$env:LOCALAPPDATA\Arma 3 Launcher\Presets"
 $Directory_Exists = Test-Path -PathType Container $Preset_Directory
 if (!$Directory_Exists) {
-    Write-Host -ForegroundColor DarkYellow "[MISSING]"
+    Write-Host -ForegroundColor Yellow "[MISSING]"
     Write-Host "Création du dossier de préset du launcher Arma 3 : " -NoNewline
     New-Item $Preset_Directory -ItemType Directory | Out-Null
     Write-Host -ForegroundColor Green "[OK]"    
@@ -17,7 +17,7 @@ Write-Host "Vérification de l'existance d'un préset GSRI : " -NoNewline
 $Preset_File = "$Preset_Directory\GSRI.preset2"
 $Preset = Test-Path -PathType Leaf $Preset_File
 if ($Preset) {
-    Write-Host -ForegroundColor DarkYellow "[EXISTS]"
+    Write-Host -ForegroundColor Yellow "[EXISTS]"
     Remove-Item $Preset_File -Confirm
     if (Test-Path -PathType Leaf $Preset_File) { exit }
 }

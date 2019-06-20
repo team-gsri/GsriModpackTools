@@ -5,7 +5,7 @@ try {
     # Verifying current architecture
     Write-Host "Vérification de l'architecture du processeur : " -NoNewline
     $Is_Arch_X64 = ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64')
-    if ($Is_Arch_X64) { Write-Host -ForegroundColor Green '[X64]' } else { Write-Host -ForegroundColor DarkYellow '[X86]' }    
+    if ($Is_Arch_X64) { Write-Host -ForegroundColor Green '[X64]' } else { Write-Host -ForegroundColor Yellow '[X86]' }    
     $Uninstall_Registry_Path = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
     $Uninstall_Registry_Path_Wow64 = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
 
@@ -107,7 +107,7 @@ try {
 catch {
     $global:fail = $true
     Write-Host ""
-    Write-Host -ForegroundColor DarkYellow 'Une erreur est survenue :'
-    Write-Host -ForegroundColor DarkYellow $_.Exception.Message
+    Write-Host -ForegroundColor Yellow 'Une erreur est survenue :'
+    Write-Host -ForegroundColor Yellow $_.Exception.Message
     Pause
 }
