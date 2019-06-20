@@ -12,44 +12,36 @@ try {
 
     function Test-Installation {
         param(
-            [string]$DisplayName,
-            [string]$Subnode = "",
+            [string]$Name,
+            [string]$Node,
             [bool]$IsWOW64 = $false
         )
 
-        Write-Host "Vérification de l'installation de $DisplayName : " -NoNewline
+        Write-Host "Vérification de l'installation de $Name : " -NoNewline
 
         $Uninstall_Registry_Path = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
         $Uninstall_Registry_Path_Wow64 = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
-        $Registry_Path = If ($Is_WOW64) { $Uninstall_Registry_Path_Wow64 } else { $Uninstall_Registry_Path }
-        $Registry_Path = "$Registry_Path\$Subnode"
-
-        $Registry_Entry = Get-ChildItem -Recurse -Path $Registry_Path |
-        Where-Object {
-            $DisplayName -eq ($_ | Get-ItemProperty -Name DisplayName -ErrorAction Ignore).DisplayName
-        } |
-        Select-Object -First 1
-        
-        $Install_Location = $Registry_Entry | Get-ItemPropertyValue -Name InstallLocation
+        $Uninstall_Path = If ($IsWOW64) { $Uninstall_Registry_Path_Wow64 } else { $Uninstall_Registry_Path }
+        $Registry_Path = "$Uninstall_Path\$Node"
+        $Install_Location = Get-ItemPropertyValue -Path $Registry_Path -Name InstallLocation
         If ($null -eq $Install_Location) {
             $global:fail = $true
             Write-Host -ForegroundColor Red "[FAIL]"
         }
         else {
             Write-Host -ForegroundColor Green "[OK]"
-            Write-Host -ForegroundColor Blue " > $Install_Location"
         }
     }
 
 
     # Vérification de l'installation de Arma 3
-    Test-Installation -DisplayName 'Arma 3'
+    Test-Installation -Name 'Arma 3' -Node 'Steam App 107410'
     
     # Vérification de l'installation de Arma 3 Sync
-    Test-Installation -DisplayName 'Arma3Sync' -IsWOW64 $Is_Arch_X64
+    Test-Installation -Name 'Arma3Sync' -Node '{F097E7D7-D093-4394-9EED-43AFCCD12B7A}_is1' -IsWOW64 $Is_Arch_X64 
     
     # Vérification de l'installation de Teamspeak
-    Test-Installation -DisplayName 'TeamSpeak 3 Client'
+    Test-Installation -Name 'TeamSpeak 3 Client' -Node 'TeamSpeak 3 Client'
   
     # Vérification si le modpack est à jour
     Write-Host 'Vérification de la version du modpack : ' -NoNewline
