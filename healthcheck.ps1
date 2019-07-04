@@ -1,106 +1,153 @@
-try {
+[CmdletBinding()]
+Param()
 
-    $global:fail = $false
+function Get-RemoteVersion {
+    [CmdletBinding()]
+    param()
 
-    # Verifying current architecture
-    Write-Host "Vérification de l'architecture du processeur : " -NoNewline
-    $Is_Arch_X64 = ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64')
-    if ($Is_Arch_X64) { Write-Host -ForegroundColor Green '[X64]' } else { Write-Host -ForegroundColor Yellow '[X86]' }    
-    $Uninstall_Registry_Path = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
-    $Uninstall_Registry_Path_Wow64 = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
+    $Content = (Invoke-WebRequest -URI 'https://mods.gsri.team/version.txt').Content
+    if ($null -eq $Content) { throw 'Impossible de contacter le serveur de mods GSRI' }
+    return $Content.Trim()
+}
 
+function Get-LocalVersion {
+    $Content = (Get-Content .\version.txt -ErrorAction SilentlyContinue)
+    if ($null -eq $Content) { return 0 }
+    return $Content.Trim()
+}
 
-    function Test-Installation {
-        param(
-            [string]$Name,
-            [string]$Node,
-            [bool]$IsWOW64 = $false
-        )
+function Test-AppInstallation {
+    [CmdletBinding()]
+    param(
+        [string]$Name,
+        [string]$Node,
+        [switch]$IsWOW64
+    )
 
-        Write-Host "Vérification de l'installation de $Name : " -NoNewline
+    $Registry_Path_Default = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
+    $Registry_Path_Wow = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
+    $IsWin64 = ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64')
+    if ($IsWin64 -and $IsWOW64) {
+        Write-Verbose 'Cette application utilise WOW64'
+        $Registry_Path = "$Registry_Path_Wow\$Node"
+    }
+    else {
+        $Registry_Path = "$Registry_Path_Default\$Node"
+    }
+    Write-Verbose "Recherche de la clef de registre : $Registry_Path"
+    $Install_Location = Get-ItemPropertyValue -Path $Registry_Path -Name InstallLocation -ErrorAction SilentlyContinue        
+    if ($null -eq $Install_Location) {
+        write-verbose 'La clef de registre est introuvable'
+        return $false 
+    }
+    Write-Debug "Recherche du chemin d'installation de l'application : $Install_Location"
+    return Test-Path -Path $Install_Location -PathType Container -ErrorAction SilentlyContinue
+}
 
-        $Uninstall_Registry_Path = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
-        $Uninstall_Registry_Path_Wow64 = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
-        $Uninstall_Path = If ($IsWOW64) { $Uninstall_Registry_Path_Wow64 } else { $Uninstall_Registry_Path }
-        $Registry_Path = "$Uninstall_Path\$Node"
-        $Install_Location = Get-ItemPropertyValue -Path $Registry_Path -Name InstallLocation -ErrorAction Ignore
-        If ($null -eq $Install_Location) {
-            $global:fail = $true
-            Write-Host -ForegroundColor Red "[FAIL]"
+function Test-ModpackVersion {
+    [CmdletBinding()]
+    param()
+
+    $Remote = Get-RemoteVersion    
+    Write-Verbose "Version serveur : $Remote"
+
+    $Local = Get-LocalVersion
+    if (0 -eq $Local) {
+        Write-Verbose 'Modpack local introuvable'
+        return $false
+    }
+    else {
+        Write-Verbose "Version locale : $Local"
+    }
+
+    $Compare = Compare-Object $Remote -DifferenceObject $Local
+    return 0 -eq $Compare
+}
+
+function Test-TaskForceLegacy {
+    [CmdletBinding()]
+    param()
+
+    Write-Verbose 'Recherche des fichiers TFAR 0.x ...'
+    "$env:APPDATA\TS3Client\plugins\task_force_radio_win64.dll",
+    "$env:APPDATA\TS3Client\plugins\task_force_radio_win32.dll" | ForEach-Object {
+        if (Test-Path -PathType Leaf $_) {
+            Write-Warning "Un fichier TFAR 0.x a été détecté : $_"
+            $status++
         }
-        else {
-            Write-Host -ForegroundColor Green "[OK]"
-        }
-    }
-
-
-    # Vérification de l'installation de Arma 3
-    Test-Installation -Name 'Arma 3' -Node 'Steam App 107410'
-    
-    # Vérification de l'installation de Arma 3 Sync
-    Test-Installation -Name 'Arma3Sync' -Node '{F097E7D7-D093-4394-9EED-43AFCCD12B7A}_is1' -IsWOW64 $Is_Arch_X64 
-    
-    # Vérification de l'installation de Teamspeak
-    Test-Installation -Name 'TeamSpeak 3 Client' -Node 'TeamSpeak 3 Client'
-  
-    # Vérification si le modpack est Ã  jour
-    Write-Host 'Vérification de la version du modpack : ' -NoNewline
-    $Ver_Remote = (Invoke-WebRequest -UseBasicParsing -URI "https://mods.gsri.team/version.txt").Content
-    $Ver_Remote_Null = ($null -eq $Ver_Remote)
-    $Ver_Remote_Value = if ($Ver_Remote_Null) { "-" } else { $Ver_Remote.Trim() }
-    $Ver_Local = (Get-Content .\version.txt -ErrorAction Ignore)
-    $Ver_Local_Null = ($null -eq $Ver_Local)
-    $Ver_Local_Value = if ($Ver_Local_Null) { "-" } else { $Ver_Local.Trim() }
-    $Ver_Compare = Compare-Object $Ver_Remote_Value -DifferenceObject $Ver_Local_Value
-    if ($Ver_Null_Remote -or $Ver_Null_Local -or $Ver_Compare) {
-        $global:fail = $true
-        Write-Host -ForegroundColor Red "[FAIL]"
-    }
-    else {
-        Write-Host -ForegroundColor Green "[OK]"
-    }
-    Write-Host -ForegroundColor Cyan " > Version locale : $Ver_Local_Value"
-    Write-Host -ForegroundColor Cyan " > Version serveur : $Ver_Remote_Value"
-    
-    # Vérification absence de reliquats TFAR Zero
-    $TS_Path = "$env:APPDATA\TS3Client\plugins"
-    Write-Host 'Vérification de l''absence du plugin TS3 TFAR Zero : ' -NoNewline
-    $TFAR_Zero_File = if ($Is_Arch_X64) { "$TS_Path\task_force_radio_win64.dll" } else { "$TS_Path\task_force_radio_win32.dll" }
-    $TFAR_Zero = Test-Path -PathType Leaf $TFAR_Zero_File
-    if ($TFAR_Zero) {
-        $global:fail = $true
-        Write-Host -ForegroundColor Red "[FAIL]" 
-        Write-Host -ForegroundColor Cyan " > $TFAR_Zero_File présent"
-    }
-    else {
-        Write-Host -ForegroundColor Green "[OK]" 
-    }
-
-    # Vérification installation TFAR Beta
-    Write-Host 'Vérification de la présence du plugin TS3 TFAR Beta : ' -NoNewline
-    $TFAR_Beta_File = if ($Is_Arch_X64) { "$TS_Path\TFAR_win64.dll" } else { "$TS_Path\TFAR_win32.dll" }
-    $TFAR_Beta = Test-Path -PathType Leaf $TFAR_Beta_File
-    if (!$TFAR_Beta) {
-        $global:fail = $true
-        Write-Host -ForegroundColor Red "[FAIL]"
-        Write-Host -ForegroundColor Cyan " > $TFAR_Beta_File absent"
-    }
-    else {
-        Write-Host -ForegroundColor Green "[OK]" 
     }    
+    return 0 -eq $status
+}
 
-    if ($global:fail) {
+function Test-TaskForceBeta {
+    [CmdletBinding()]
+    param()
+
+    Write-Verbose 'Recherche des fichiers TFAR 1.x ...'
+    "$env:APPDATA\TS3Client\plugins\TFAR_win64.dll",
+    "$env:APPDATA\TS3Client\plugins\TFAR_win32.dll" | ForEach-Object {
+        if (-not (Test-Path -PathType Leaf $_)) {
+            Write-Verbose "Le fichier TFAR 1.x est manquant : $_"
+            $status++
+        }
+    }    
+    return 2 -eq $status
+}
+
+function Write-Generic {
+    param(
+        [string]$Message,
+        [bool]$Result
+    )
+    Write-Host "$Message : " -NoNewline
+    if ($Result) {
+        Write-Host -ForegroundColor Green '[OK]'
+        return 0
+    } 
+    Write-Host -ForegroundColor Red '[FAIL]'
+    return 1
+}
+
+function Write-AppInstallationStatus {
+    param(
+        [string]$Name,
+        [string]$Node,
+        [switch]$IsWOW64
+    )
+    $Result = (Test-AppInstallation -Name $Name -Node $Node -IsWOW64:$IsWOW64)
+    return Write-Generic -Message "Vérification de l'installation de $Name" -Result $Result
+}
+
+function Write-ModpackStatus {
+    $Result = (Test-ModpackVersion)
+    return Write-Generic -Message 'Vérification de la version du modpack' -Result $Result
+}
+
+function Write-TaskForceStatus {
+    [CmdletBinding()]
+    param()
+
+    $Result = (Test-TaskForceLegacy) -and (Test-TaskForceBeta)
+    return Write-Generic -Message 'Vérification de l''installation du plugin TFAR' -Result $Result    
+}
+
+function Write-InstallationStatus {
+    [CmdletBinding()]
+    param()
+
+    $status += Write-AppInstallationStatus -Name 'Arma 3' -Node 'Steam App 107410'
+    $status += Write-AppInstallationStatus -Name 'Arma3Sync' -Node '{F097E7D7-D093-4394-9EED-43AFCCD12B7A}_is1' -IsWOW64
+    $status += Write-AppInstallationStatus -Name 'TeamSpeak 3 Client' -Node 'TeamSpeak 3 Client'
+    $status += Write-ModpackStatus
+    $status += Write-TaskForceStatus
+
+    if (0 -lt $status) {
         Write-Host -ForegroundColor Red "`n *** Votre installation n'est pas correcte *** `n"
     }
     else {
         Write-Host -ForegroundColor Green "`n *** Votre installation est validée *** `n"
-    }    
-}
-catch {
-    $global:fail = $true
-    Write-Host ""
-    Write-Host -ForegroundColor Yellow 'Une erreur est survenue :'
-    Write-Host -ForegroundColor Yellow $_.Exception.Message    
+    }
 }
 
+Write-InstallationStatus
 Pause
