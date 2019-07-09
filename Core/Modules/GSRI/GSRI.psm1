@@ -1,5 +1,6 @@
 #Requires -Module TFAR
 #Requires -Module AppStatus
+#Requires -Module Arma
 
 function Get-LocalVersion {
     [CmdletBinding()]
@@ -74,7 +75,7 @@ function Write-AppInstallationStatus {
         [string]$Property = 'InstallLocation',
         [switch]$IsWOW64
     )
-    $Result = (Test-AppInstallation -Name $Name -Node $Node -Property $Property -IsWOW64:$IsWOW64)
+    $Result = (Test-AppInstallation -Name $Name -Node $Node -Property $Property -IsWOW64:$IsWOW64 -Verbose:($PSBoundParameters['Verbose'] -eq $true))
     return Write-Generic -Message "Checking app installation $Name" -Result $Result
 }
 
@@ -92,7 +93,7 @@ function Write-TaskForceStatus {
     [CmdletBinding()]
     param()
 
-    $Result = Test-TaskForceStatus
+    $Result = Test-TaskForceStatus -Verbose:($PSBoundParameters['Verbose'] -eq $true)
     return Write-Generic -Message 'Checking TFAR plugin installation' -Result $Result    
 }
 
@@ -112,8 +113,28 @@ function Write-InstallationStatus {
 
     if (0 -lt $status) {
         Write-Host -ForegroundColor Red "`n *** Your installation is incorrect *** `n"
+        return $false
     }
     else {
         Write-Host -ForegroundColor Green "`n *** Your installation is valid *** `n"
+        return $true
     }
 }
+
+function Install-Preset {
+    [CmdletBinding()]
+    param(
+        [string]$Path,
+        [string]$Name
+    )
+
+    if (-not(Test-Path $Path -PathType Container)) {
+        throw "$Path not found"
+    }
+    Get-ChildItem -Path $Path -Recurse -Filter "@*" |
+    Where-Object { -not ($_.FullName -like "*\Campaign\@*") } |
+    Write-Preset -Name $Name -Verbose:($PSBoundParameters['Verbose'] -eq $true)
+}
+
+Export-ModuleMember -Function Install-Preset
+Export-ModuleMember -Function Write-InstallationStatus 
