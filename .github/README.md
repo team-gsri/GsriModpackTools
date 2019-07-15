@@ -2,29 +2,25 @@
 
 ## What is `modpack-tools`?
 
-This a project is a maintenance project aimed at developping and supporting our team's scripts used for modpack maintenance. They are intended to help our players and visitors to ensure their Arma 3 mod installation is not corrupted and help them for their initial setup.
+This a project maintains a series of powershell scripts used by [french Arma 3 milsim unit GSRI](https://www.gsri.team) to help with our modpack maintenance.
 
-## Quick reference
+It helps our players and visitors to ensure their modpack installation is not corrupted and help them for their initial setup. It uses a library we developped on our own which can be found in [modpack-lib](https://github.com/team-gsri/modpack-lib)
 
-- **Where to get help with Arma 3**
+## Rules and standards
 
-    [the Arma 3 official support](https://support.bohemia.net/arma-3), [the Bohemia Interactive Forums](https://forums.bohemia.net/forums/forum/218-arma-3/)
+The follwing documents provide additional information on rules and standards applying to this project :
 
-- **Where to file issues with `modpack-tools`**
+* [MIT license](./LICENSE)
+* [GSRI code of conduct](./CODE_OF_CONDUCT.md)
+* [Contributing to this project](./CONTRIBUTING.md)
 
-    [the project's Github](https://github.com/team-gsri/modpack-tools/issues)
+## How to use these scripts
 
-- **Maintained by**
+This project is a tool-pack composed of multiple scripts. These scripts are expected to be downloaded along our modpack using Arma3Sync. For details on how to do that, please refere to our website https://www.gsri.team/jouer (FR).
 
-    [ArwynFr](https://github.com/ArwynFr)
+- ### `test-modpack.ps1`
 
-## How to use this tools
-
-This project is a tool-pack composed of multiple scripts :
-
-- ### `healthcheck.ps1`
-
-This script will check your installation for missing steps in our installation procedure ; it will not change anything and you must use other scripts to correct failures.
+This script will check your installation for missing steps in our installation procedure ; it will not change anything and you must use other scripts or manual actions to correct failures.
 
 - ### `install-preset.ps1`
 
@@ -34,13 +30,6 @@ This script will create an Arma 3 launcher preset named `GSRI` with the mods you
 
 This script will check your TFAR plugin and try to install it. Since we are using TFAR beta (1.x), which uses different filenames than TFAR zero (0.x), manual installation may cause mayhem in your teamspeak plugins directory ; this script will do it's best to tidy the mess and help you get everything working.
 
-## Contributing
+## How to get help ?
 
-You may contribute to the project either by:
-
-- Submiting issues and request features on github
-- Forking the github repository and make pull requests
-
-## License
-
-This software is licensed under the terms of the [MIT License](LICENSE).
+You can ask for support on [our discord server](https://discord.gg/bhMn4jd)
