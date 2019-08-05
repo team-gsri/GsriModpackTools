@@ -1,8 +1,8 @@
 [CmdletBinding()]
 Param()
 
-if (!(Get-Module GsriModpackLib -ListAvailable)) { Install-Module GsriModpackLib -Scope CurrentUser }
-Import-Module GsriModpackLib -Force
+Install-Module GsriModpackLib -Force -MaximumVersion 2.0
+Import-Module GsriModpackLib -Force -MaximumVersion 2.0
 
-Write-InstallationStatus -Path $PSScriptRoot -Verbose:($PSBoundParameters['Verbose'] -eq $true) | Out-Null
+Show-InstallationStatus -Path $PSScriptRoot -Verbose:($PSBoundParameters['Verbose'] -eq $true) | Out-Null
 Pause
