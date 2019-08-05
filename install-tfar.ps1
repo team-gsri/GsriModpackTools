@@ -2,8 +2,8 @@
 Param()
 
 try {
-    if (!(Get-Module GsriModpackLib -ListAvailable)) { Install-Module GsriModpackLib -Scope CurrentUser }
-    Import-Module GsriModpackLib -Force
+    Install-Module GsriModpackLib -Force -MaximumVersion 2.0
+    Import-Module GsriModpackLib -Force -MaximumVersion 2.0
     
     $PluginPath = 'Core\@TFAR\teamspeak\task_force_radio.ts3_plugin'
     Install-TaskForceAddon -PluginSource "$PSScriptRoot\$PluginPath" -Verbose:($PSBoundParameters['Verbose'] -eq $true)
