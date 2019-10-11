@@ -9,7 +9,7 @@ This project maintains a series of powershell scripts used by [french Arma 3 mil
 The follwing documents provide additional information on rules and standards applying to this project :
 
 *   [MIT license](../LICENSE)
-*   [GSRI code of conduct](./CODE_OF_CONDUCT.md)
+*   [GSRI code of conduct](https://github.com/team-gsri/CodeOfConduct/blob/master/.github/CODE_OF_CONDUCT.md)
 *   [Contributing to this project](./CONTRIBUTING.md)
 
 ## How to use these scripts

@@ -1,3 +1,3 @@
 # GSRI code of conduct
 
-*We are currently in the process of writing this documentation.*
+[Our applicable Code of Conduct is on GitHub](https://github.com/team-gsri/CodeOfConduct/blob/master/.github/CODE_OF_CONDUCT.md)
