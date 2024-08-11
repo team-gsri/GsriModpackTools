@@ -14,7 +14,7 @@ The follwing documents provide additional information on rules and standards app
 
 ## How to use these scripts
 
-This project is a tool-pack composed of multiple scripts. These scripts are expected to be downloaded along our modpack using Arma3Sync. For details on how to do that, please refere to our website [https://www.gsri.team/jouer](https://www.gsri.team/jouer) (FR).
+This project is a tool-pack composed of multiple scripts. These scripts are expected to be downloaded along our modpack using Arma3Sync. For details on how to do that, please refere to [Groupe Special de Reconnaissance et d'intervention website](https://www.gsri.team/) (FR).
 
 ### `test-modpack.ps1`
 
